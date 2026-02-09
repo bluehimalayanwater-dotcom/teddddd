@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>For Smriti ❤️</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Quicksand:wght@300;500;700&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --gold: #d4af37;
+            --wine: #4a0404;
+            --rose: #ff4d6d;
+            --glass: rgba(255, 255, 255, 0.07);
+            --neon-blue: #00f3ff;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body, html { width: 100%; height: 100%; overflow: hidden; font-family: 'Quicksand', sans-serif; background: #000; }
+
+        #bgCanvas { position: fixed; inset: 0; z-index: 1; pointer-events: none; }
+        
+        #bgMusic { display: none; }
+
+        /* --- BIOMETRIC LOCK SCREEN --- */
+        #biometric-page {
+            position: fixed; inset: 0; z-index: 100;
+            background: #000;
+            display: flex; flex-direction: column;
+            justify-content: center; align-items: center;
+            transition: opacity 1s ease, transform 1s ease;
+        }
+
+        .scan-container {
+            position: relative; width: 120px; height: 120px;
+            margin-bottom: 30px; cursor: pointer;
+        }
+
+        .fingerprint-img {
+            width: 100%; height: 100%;
+            fill: rgba(255, 255, 255, 0.15);
+            transition: fill 0.5s;
+        }
+
+        .scan-line {
+            position: absolute; top: 0; left: 0; width: 100%; height: 4px;
+            background: var(--gold);
+            box-shadow: 0 0 15px var(--gold);
+            opacity: 0;
+            border-radius: 50%;
+        }
+
+        .scan-active .scan-line {
+            opacity: 1;
+            animation: scanMove 1.5s linear infinite;
+        }
+
+        .scan-active .fingerprint-img {
+            fill: rgba(212, 175, 55, 0.2);
+            animation: pulseFinger 1.5s infinite;
+        }
+
+        .scan-success .fingerprint-img {
+            fill: var(--rose);
+            filter: drop-shadow(0 0 15px var(--rose));
+            animation: none;
+        }
+        
+        .scan-success .scan-line { display: none; }
+
+        @keyframes scanMove {
+            0% { top: 0; }
+            50% { top: 100%; }
+            100% { top: 0; }
+        }
+
+        @keyframes pulseFinger {
+            0% { opacity: 0.5; }
+            50% { opacity: 1; }
+            100% { opacity: 0.5; }
+        }
+
+        .bio-text {
+            color: var(--gold); font-size: 1.2rem; letter-spacing: 2px;
+            text-transform: uppercase; text-align: center;
+            min-height: 2em;
+        }
+        
+        .bio-subtext {
+            color: rgba(255,255,255,0.4); font-size: 0.8rem; margin-top: 10px;
+        }
+
+        .ring {
+            position: absolute; width: 160px; height: 160px;
+            border: 1px solid rgba(212, 175, 55, 0.1);
+            border-radius: 50%;
+            animation: spin 10s linear infinite;
+        }
+        
+        .ring::before {
+            content: ''; position: absolute; top: -2px; left: 50%;
+            width: 4px; height: 4px; background: var(--gold);
+            border-radius: 50%; box-shadow: 0 0 10px var(--gold);
+        }
+
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+
+        /* --- PROPOSAL PAGE --- */
+        #proposal-page {
+            position: absolute; width: 100%; height: 100%;
+            display: none;
+            justify-content: center; align-items: center;
+            z-index: 10; opacity: 0; transition: opacity 1s ease;
+            background: radial-gradient(circle at center, #2c0404 0%, #000 100%);
+        }
+
+        .card {
+            background: var(--glass);
+            backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(212, 175, 55, 0.3);
+            border-radius: 40px; padding: 50px 30px;
+            width: 90%; max-width: 400px; text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+        }
+
+        h2 { font-family: 'Great Vibes', cursive; color: var(--gold); font-size: 3.5rem; margin-bottom: 10px; text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+        p.question { color: #fff; font-size: 1.3rem; line-height: 1.6; margin-bottom: 40px; font-weight: 300; }
+        b { color: var(--rose); font-weight: 700; }
+
+        .btn-container { position: relative; height: 140px; width: 100%; }
+        
+        .btn {
+            position: absolute; left: 50%; transform: translateX(-50%);
+            border: none; border-radius: 100px; font-weight: 700;
+            cursor: pointer; transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1);
+            text-transform: uppercase; letter-spacing: 2px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3);
+        }
+
+        .btn-yes { 
+            top: 0; width: 220px; padding: 20px; 
+            background: linear-gradient(135deg, var(--gold), #b8860b); 
+            color: var(--wine); z-index: 5; font-size: 1.1rem;
+        }
+        
+        .btn-yes:hover { transform: translateX(-50%) scale(1.05); box-shadow: 0 0 30px rgba(212, 175, 55, 0.6); }
+
+        .btn-no { 
+            top: 80px; width: 140px; padding: 12px; 
+            background: rgba(255,255,255,0.1); color: rgba(255,255,255,0.5); 
+            font-size: 0.8rem; z-index: 6;
+        }
+
+        /* --- TEDDY & PHYSICS PAGE --- */
+        #teddy-page { 
+            display: none; position: fixed; inset: 0; z-index: 20; 
+            background: radial-gradient(circle at center, #1a0202 0%, #000 100%);
+        }
+        #physics-container { width: 100%; height: 100%; }
+
+        #ui-overlay {
+            position: absolute; bottom: 40px; left: 50%; transform: translateX(-50%);
+            width: 90%; max-width: 360px; text-align: center; z-index: 30; pointer-events: none;
+        }
+        
+        #ui-overlay * { pointer-events: auto; }
+
+        .title-text {
+            color: var(--gold); font-size: 2.5rem; font-family: 'Great Vibes'; 
+            margin-bottom: 15px; text-shadow: 0 2px 10px rgba(0,0,0,0.8);
+            opacity: 0; animation: fadeIn 2s ease forwards 1s;
+        }
+
+        @keyframes fadeIn { to { opacity: 1; } }
+
+        .btn-cylindrical {
+            width: 100%; padding: 22px; border-radius: 60px;
+            background: linear-gradient(145deg, #ff4d6d, #a4133c);
+            color: white; font-weight: 700; font-size: 1.2rem; border: none;
+            box-shadow: 0 15px 35px rgba(255, 77, 109, 0.4), inset 0 -4px 12px rgba(0,0,0,0.3);
+            cursor: pointer; position: relative; overflow: hidden;
+            transition: transform 0.1s; letter-spacing: 1px;
+        }
+        .btn-cylindrical:active { transform: scale(0.96); }
+        .btn-cylindrical::after {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 60%);
+            opacity: 0; transform: scale(0.5); transition: opacity 0.5s, transform 0.5s;
+        }
+        .btn-cylindrical:active::after { opacity: 1; transform: scale(1); transition: 0s; }
+
+        #love-note-container {
+            position: fixed; top: 30%; left: 50%; transform: translate(-50%, -50%);
+            width: 85%; max-width: 400px;
+            background: rgba(20, 0, 0, 0.9); border: 1px solid var(--rose);
+            padding: 25px; border-radius: 20px;
+            display: none; z-index: 100; box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+            text-align: center;
+        }
+        
+        #love-note-text {
+            font-family: 'Quicksand', sans-serif; color: #fff; font-size: 1.2rem;
+            line-height: 1.5; min-height: 1.5em;
+        }
+        
+        .cursor { display: inline-block; width: 2px; height: 1.2em; background: var(--rose); animation: blink 1s infinite; vertical-align: bottom; }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+
+    </style>
+</head>
+<body>
+
+<audio id="bgMusic" loop>
+    <source src="https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3" type="audio/mpeg">
+</audio>
+
+<canvas id="bgCanvas"></canvas>
+
+<div id="biometric-page">
+    <div class="ring"></div>
+    <div class="scan-container" id="scanTrigger">
+        <div class="scan-line"></div>
+        <svg class="fingerprint-img" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+            <path d="M17.81 4.47c-.08 0-.16-.02-.23-.06C15.66 3.42 14 2.74 12.01 2.74c-2.01 0-3.66.69-5.58 1.69-.39.2-.86.06-1.07-.33-.2-.39-.06-.86.33-1.07C7.81 1.93 9.77 1 12.01 1c2.25 0 4.2.94 6.26 2.05.39.21.53.69.32 1.08-.13.24-.37.34-.61.34h-.17zM5.59 18.89c-.19 0-.38-.07-.53-.22-.29-.29-.29-.77 0-1.06 1.4-1.4 2.17-3.26 2.17-5.25 0-2.65-2.15-4.8-4.8-4.81-.41 0-.75-.33-.75-.75s.34-.75.75-.75c3.47.01 6.3 2.83 6.3 6.31 0 2.38-.93 4.62-2.61 6.3-.15.15-.34.23-.53.23zm10.97 3.01c-.13 0-.27-.04-.39-.12-1.25-.8-2.63-1.23-4.08-1.26-2.22-.05-4.32.96-5.75 2.78-.25.32-.72.38-1.04.13-.32-.25-.38-.72-.13-1.04 1.74-2.22 4.31-3.46 7.04-3.39 1.76.04 3.42.56 4.93 1.53.35.23.46.7.23 1.05-.14.21-.37.32-.6.32H16.56zM13.34 16.97c-.12 0-.25-.03-.37-.1-1.38-.85-2.93-1.29-4.49-1.27-2.68.04-5.21 1.48-6.61 3.75-.22.35-.68.46-1.04.24-.35-.22-.46-.68-.24-1.04 1.66-2.69 4.64-4.41 7.82-4.46 1.86-.02 3.7.5 5.34 1.51.36.22.47.69.25 1.05-.15.22-.39.32-.66.32zM21 12.5c0 2.22-.79 4.35-2.23 6.01-.25.29-.7.33-.99.08-.29-.25-.33-.7-.08-.99 1.23-1.42 1.9-3.23 1.9-5.11 0-3.61-2.45-6.79-5.92-7.69-.4-.1-.65-.51-.55-.91.1-.4.51-.65.91-.55 4.05 1.05 6.96 4.86 6.96 9.16zm-3.03-8.15c-.11 0-.22-.03-.33-.09-1.37-.82-2.94-1.25-4.52-1.25-2.12 0-4.14.77-5.7 2.16-.31.28-.78.25-1.05-.06-.28-.31-.25-.78.06-1.05 1.83-1.63 4.19-2.55 6.69-2.55 1.85 0 3.69.51 5.3 1.47.36.21.48.68.27 1.04-.15.23-.4.33-.72.33z"/>
+        </svg>
+    </div>
+    <div class="bio-text" id="bioStatus">TOUCH ID</div>
+    <div class="bio-subtext">Verification Required</div>
+</div>
+
+<div id="proposal-page">
+    <div class="card">
+        <h2>Dearest Smriti,</h2>
+        <p class="question">Life is better with you.<br>Kya tum apne surname mein<br><b>Bhumihar</b> lagwaogi?</p>
+        <div class="btn-container">
+            <button class="btn btn-yes" id="yesBtn">Hann Adesh ❤️</button>
+            <button class="btn btn-no" id="noBtn">Nhi Adesh</button>
+        </div>
+    </div>
+</div>
+
+<div id="teddy-page">
+    <div id="physics-container"></div>
+    
+    <div id="love-note-container">
+        <div id="love-note-text"></div><span class="cursor"></span>
+    </div>
+
+    <div id="ui-overlay">
+        <h2 class="title-text">Mrs. Smriti Bhumihar</h2>
+        <button class="btn-cylindrical" id="loveBtn">WHY I LOVE YOU ❤️</button>
+    </div>
+</div>
+
+<script>
+    // --- BACKGROUND ANIMATION ---
+    const canvas = document.getElementById('bgCanvas');
+    const ctx = canvas.getContext('2d');
+    let width, height, petals = [];
+
+    function resize() {
+        width = canvas.width = window.innerWidth;
+        height = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    class Petal {
+        constructor() { this.reset(); this.y = Math.random() * height; }
+        reset() {
+            this.x = Math.random() * width; this.y = -20;
+            this.size = Math.random() * 6 + 3;
+            this.speed = Math.random() * 1 + 0.5;
+            this.angle = Math.random() * 360;
+            this.spin = (Math.random() - 0.5) * 2;
+        }
+        update() {
+            this.y += this.speed; this.angle += this.spin;
+            if (this.y > height) this.reset();
+        }
+        draw() {
+            ctx.save(); ctx.translate(this.x, this.y); ctx.rotate(this.angle * Math.PI / 180);
+            ctx.fillStyle = 'rgba(255, 77, 109, 0.3)';
+            ctx.beginPath(); ctx.ellipse(0, 0, this.size, this.size/1.5, 0, 0, Math.PI * 2); ctx.fill();
+            ctx.restore();
+        }
+    }
+    for(let i=0; i<50; i++) petals.push(new Petal());
+
+    function animate() {
+        ctx.clearRect(0, 0, width, height);
+        petals.forEach(p => { p.update(); p.draw(); });
+        requestAnimationFrame(animate);
+    }
+    animate();
+
+    // --- BIOMETRIC LOGIC ---
+    const bioPage = document.getElementById('biometric-page');
+    const scanTrigger = document.getElementById('scanTrigger');
+    const bioStatus = document.getElementById('bioStatus');
+    const proposalPage = document.getElementById('proposal-page');
+    let isScanning = false;
+
+    scanTrigger.addEventListener('click', startScan);
+    scanTrigger.addEventListener('touchstart', (e) => { e.preventDefault(); startScan(); });
+
+    function startScan() {
+        if(isScanning) return;
+        isScanning = true;
+
+        scanTrigger.classList.add('scan-active');
+        bioStatus.innerText = "Scanning...";
+        
+        if (navigator.vibrate) navigator.vibrate(50);
+
+        setTimeout(() => {
+            bioStatus.innerText = "Verifying...";
+            if (navigator.vibrate) navigator.vibrate([30, 30, 30]);
+        }, 1500);
+
+        setTimeout(() => {
+            scanTrigger.classList.remove('scan-active');
+            scanTrigger.classList.add('scan-success');
+            bioStatus.style.color = "#ff4d6d";
+            bioStatus.innerHTML = "Identity Verified:<br>SMRITI ❤️";
+            if (navigator.vibrate) navigator.vibrate(200);
+            
+            setTimeout(() => {
+                bioPage.style.opacity = 0;
+                bioPage.style.transform = "scale(1.1)";
+                setTimeout(() => {
+                    bioPage.style.display = 'none';
+                    proposalPage.style.display = 'flex';
+                    setTimeout(() => { proposalPage.style.opacity = 1; }, 50);
+                }, 800);
+            }, 1500);
+
+        }, 3000);
+    }
+
+    // --- NO BUTTON LOGIC ---
+    const noBtn = document.getElementById('noBtn');
+    const yesBtn = document.getElementById('yesBtn');
+    
+    function moveButton() {
+        const x = Math.random() * (window.innerWidth - 150);
+        const y = Math.random() * (window.innerHeight - 100);
+        noBtn.style.position = 'fixed';
+        noBtn.style.left = `${x}px`;
+        noBtn.style.top = `${y}px`;
+    }
+
+    noBtn.addEventListener('mouseover', moveButton);
+    noBtn.addEventListener('touchstart', (e) => { e.preventDefault(); moveButton(); });
+    noBtn.addEventListener('click', moveButton);
+
+    // --- YES BUTTON LOGIC ---
+    yesBtn.onclick = () => {
+        const music = document.getElementById('bgMusic');
+        music.volume = 0.5;
+        music.play().catch(e => console.log("Audio requires interaction first"));
+
+        const duration = 3000;
+        const end = Date.now() + duration;
+
+        (function frame() {
+            confetti({
+                particleCount: 5, angle: 60, spread: 55, origin: { x: 0 },
+                colors: ['#d4af37', '#ff4d6d', '#ffffff']
+            });
+            confetti({
+                particleCount: 5, angle: 120, spread: 55, origin: { x: 1 },
+                colors: ['#d4af37', '#ff4d6d', '#ffffff']
+            });
+            if (Date.now() < end) requestAnimationFrame(frame);
+        }());
+
+        document.getElementById('proposal-page').style.opacity = '0';
+        setTimeout(() => {
+            document.getElementById('proposal-page').style.display = 'none';
+            document.getElementById('teddy-page').style.display = 'block';
+            initPhysicsWorld();
+        }, 1500);
+    };
+
+    // --- MATTER.JS PHYSICS WORLD ---
+    function initPhysicsWorld() {
+        const { Engine, Render, Runner, Bodies, Composite, Constraint, Mouse, MouseConstraint, Events } = Matter;
+        
+        const container = document.getElementById('physics-container');
+        const engine = Engine.create();
+        const world = engine.world;
+        engine.gravity.y = 1;
+
+        const render = Render.create({
+            element: container, engine: engine,
+            options: { 
+                width: window.innerWidth, height: window.innerHeight, 
+                wireframes: false, background: 'transparent' 
+            }
+        });
+
+        // Teddy Bear
+        const x = window.innerWidth / 2;
+        const y = window.innerHeight / 4;
+        const teddyColor = '#8e5d3e';
+        const teddyOpts = { render: { fillStyle: teddyColor }, frictionAir: 0.05, density: 0.01 };
+        
+        const head = Bodies.circle(x, y-60, 40, teddyOpts);
+        const torso = Bodies.rectangle(x, y, 80, 100, { ...teddyOpts, chamfer: { radius: 20 } });
+        const armL = Bodies.rectangle(x-50, y-10, 20, 70, { ...teddyOpts, chamfer: { radius: 10 } });
+        const armR = Bodies.rectangle(x+50, y-10, 20, 70, { ...teddyOpts, chamfer: { radius: 10 } });
+        const legL = Bodies.rectangle(x-30, y+80, 25, 80, { ...teddyOpts, chamfer: { radius: 10 } });
+        const legR = Bodies.rectangle(x+30, y+80, 25, 80, { ...teddyOpts, chamfer: { radius: 10 } });
+
+        const softConstraint = (ba, bb, pa, pb) => Constraint.create({
+            bodyA: ba, bodyB: bb, pointA: pa, pointB: pb,
+            stiffness: 0.3, render: { visible: false }
+        });
+
+        const teddy = Composite.create();
+        Composite.add(teddy, [head, torso, armL, armR, legL, legR,
+            softConstraint(head, torso, {x:0, y:30}, {x:0, y:-45}),
+            softConstraint(torso, armL, {x:-35, y:-30}, {x:0, y:-30}),
+            softConstraint(torso, armR, {x:35, y:-30}, {x:0, y:-30}),
+            softConstraint(torso, legL, {x:-20, y:45}, {x:0, y:-35}),
+            softConstraint(torso, legR, {x:20, y:45}, {x:0, y:-35})
+        ]);
+
+        // --- NEW PHOTO FUNCTION ---
+        const createPhoto = (x, y, imgPath) => {
+            return Bodies.rectangle(x, y, 150, 150, { 
+                angle: (Math.random()-0.5),
+                render: { 
+                    sprite: {
+                        texture: imgPath,
+                        xScale: 0.15, // Scale down the image (0.15 = 15% original size)
+                        yScale: 0.15 
+                    }
+                } 
+            });
+        };
+
+        // --- ADDING YOUR IMAGES ---
+        const photo1 = createPhoto(x - 100, y - 200, '1.jpeg');
+        const photo2 = createPhoto(x + 100, y - 250, '2.jpeg');
+
+        const wallOpts = { isStatic: true, render: { visible: false } };
+        const floor = Bodies.rectangle(width/2, height+30, width, 60, wallOpts);
+        const ceiling = Bodies.rectangle(width/2, -500, width, 60, wallOpts);
+        const leftWall = Bodies.rectangle(-30, height/2, 60, height*2, wallOpts);
+        const rightWall = Bodies.rectangle(width+30, height/2, 60, height*2, wallOpts);
+
+        Composite.add(world, [teddy, photo1, photo2, floor, ceiling, leftWall, rightWall]);
+
+        Events.on(render, 'afterRender', () => {
+            const c = render.context;
+            const hPos = head.position;
+            c.save();
+            c.translate(hPos.x, hPos.y);
+            c.rotate(head.angle);
+            c.fillStyle = '#000';
+            c.beginPath(); c.arc(-12, -5, 4, 0, Math.PI*2); c.fill();
+            c.beginPath(); c.arc(12, -5, 4, 0, Math.PI*2); c.fill();
+            c.fillStyle = '#4a0404';
+            c.beginPath(); c.ellipse(0, 5, 6, 4, 0, 0, Math.PI*2); c.fill();
+            c.beginPath(); c.arc(0, 8, 8, 0.2, Math.PI-0.2); c.stroke();
+            c.restore();
+        });
+
+        const mouse = Mouse.create(render.canvas);
+        const mouseConstraint = MouseConstraint.create(engine, {
+            mouse: mouse,
+            constraint: { stiffness: 0.2, render: { visible: false } }
+        });
+        Composite.add(world, mouseConstraint);
+        render.mouse = mouse;
+
+        Runner.run(Runner.create(), engine);
+        Render.run(render);
+    }
+
+    // --- TYPEWRITER ---
+    const loveBtn = document.getElementById('loveBtn');
+    const noteContainer = document.getElementById('love-note-container');
+    const noteText = document.getElementById('love-note-text');
+    
+    const messages = [
+        "Ye Hamko bhi ni pata.☺️",
+        "Shyd issliye ki tum sabse best hu.✨",
+        "Tum sabse Pyaari Hu.😘",
+        "Kyuki Tum meri golu moluu hu.. 🥰",
+        "I love you more than words can say.❤️",
+        "Forever starts with you. 💍"
+    ];
+    let msgIndex = 0;
+    let isTyping = false;
+
+    loveBtn.onclick = () => {
+        if (isTyping) return;
+        
+        const rect = loveBtn.getBoundingClientRect();
+        const x = (rect.left + rect.width / 2) / window.innerWidth;
+        const y = (rect.top + rect.height / 2) / window.innerHeight;
+        
+        confetti({
+            particleCount: 30, spread: 60, origin: { x, y },
+            colors: ['#ff4d6d', '#fff'], scalar: 0.7
+        });
+
+        noteContainer.style.display = 'block';
+        typeWriter(messages[msgIndex]);
+        msgIndex = (msgIndex + 1) % messages.length;
+    };
+
+    function typeWriter(text) {
+        isTyping = true;
+        noteText.innerHTML = '';
+        let i = 0;
+        
+        function type() {
+            if (i < text.length) {
+                noteText.innerHTML += text.charAt(i);
+                i++;
+                setTimeout(type, 50);
+            } else {
+                isTyping = false;
+                setTimeout(() => {
+                    noteContainer.style.display = 'none';
+                }, 3000);
+            }
+        }
+        type();
+    }
+
+</script>
+</body>
+</html>
